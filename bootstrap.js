@@ -2,7 +2,7 @@
 const {classes: Cc, interfaces: Ci, manager: Cm, results: Cr, utils: Cu, Constructor: CC} = Components;
 // Cm.QueryInterface(Ci.nsIComponentRegistrar);
 // const {TextDecoder, TextEncoder, OS} = Cu.import('resource://gre/modules/osfile.jsm', {});
-Cu.import('resource://gre/modules/osfile.jsm', {});
+Cu.import('resource://gre/modules/osfile.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 

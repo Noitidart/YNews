@@ -1,2 +1,2 @@
 // CONTENTSCRIPT
-alert('hi from content script!!!');
+// alert('hi from content script!!!');

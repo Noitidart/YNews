@@ -9,7 +9,7 @@ var core = {
 			name: 'ynews',
 			scripts: 'chrome://ynews/content/resources/scripts/'
 		},
-		cache_key: 'v1.0' // set to version on release
+		cache_key: Math.random() // set to version on release
 	}
 };
 var l10n = {};
@@ -23,7 +23,7 @@ function domInsertOnReady(aContentWindow) {
 	var aContentDocument = aContentWindow.document;
 	
 	if (aContentWindow.location.href.indexOf('/yhs/') == -1) {
-
+		console.warn('on search page but not the yhs page, so this page should already have the news jump tab, it seems yahoo only doesnt show the news jump tab if searched with the firefox search bar');
 		return;
 	}
 	
@@ -58,7 +58,7 @@ function domInsertOnReady(aContentWindow) {
 function doOnReady(aContentWindow) {
 
 	if (aContentWindow.frameElement) {
-
+		// console.warn('frame element DOMContentLoaded, so dont respond yet:', aContentWindow.location.href);
 		return;
 	} else {
 		// parent window loaded (not frame)
@@ -67,21 +67,21 @@ function doOnReady(aContentWindow) {
 			// check if got error loading page:
 			var webnav = aContentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
 			var docuri = webnav.document.documentURI;
-
+			// console.info('docuri:', docuri);
 			if (docuri.indexOf('about:') == 0) {
 				// target_hostname didnt really load, it was an error page
-
+				console.log('target_hostname hostname page ready, but an error page loaded, so like offline or something:', aContentWindow.location, 'docuri:', docuri);
 				// unregReason = 'error-loading';
 				return;
 			} else {
 				// target_hostname actually loaded
 				// target_hostnameReady = true;
-
+				console.error('ok target_hostname page ready, lets ensure page loaded finished');
 				domInsertOnReady(aContentWindow);
 				// ensureLoaded(aContentWindow); // :note: commented out as not needing content script right now
 			}
 		} else {
-
+			// console.log('page ready, but its not target_hostname so do nothing:', uneval(aContentWindow.location));
 			return;
 		}
 	}
@@ -90,11 +90,11 @@ function doOnReady(aContentWindow) {
 function onFullLoad(aSbId, aEvent) {
 	var aContentWindow = aEvent.target.defaultView;
 	if (aContentWindow == SANDBOXES[aSbId].contentWindowWeak.get()) {
-
+		console.error('OK aContentWindow::LOAD triggered and its a match');
 		SANDBOXES[aSbId].unloaders.unFullLoader();
 		injectContentScript(aSbId, aContentWindow);
 	} else {
-
+		console.error('aContentWindow::LOAD triggered but the cContentWindow does not equal SANDBOX[aSbId].contentWindow');
 		return;
 	}
 }
@@ -103,7 +103,7 @@ function ensureLoaded(aContentWindow) {
 	// only attached to target_hostname pages once idented as target_hostname
 	// need to ensure loaded because jquery is needed by the content script
 	
-
+	console.log('in ensureLoaded');
 	
 	last_sandbox_id++;
 	var cSbId = last_sandbox_id;
@@ -115,13 +115,13 @@ function ensureLoaded(aContentWindow) {
 	
 	var aContentDocument = aContentWindow.document;
 	
-
+	console.log('in ensureLoaded STEP 2');
 	
 	if (aContentDocument.readyState == 'complete') {
-
+		console.log('ok target_hostname was ALREADY fully loaded, so lets inject content script');
 		injectContentScript(cSbId, aContentWindow);
 	} else {
-
+		console.log('target_hostname not yet FULLY LOADEd so attaching listener to listen for full load');
 		var fullLoader = onFullLoad.bind(null, cSbId);
 		SANDBOXES[cSbId].unloaders.unFullLoader = function() {
 			delete SANDBOXES[cSbId].unloaders.unFullLoader;
@@ -133,7 +133,7 @@ function ensureLoaded(aContentWindow) {
 
 function injectContentScript(aSbId, aContentWindow) {
 	
-
+	console.log('executing injectContentScript');
 	
 	var aContentDocument = aContentWindow.document;
 	
@@ -149,7 +149,7 @@ function injectContentScript(aSbId, aContentWindow) {
 
 		delete SANDBOXES[aSbId].unloaders.unSandbox;
 		
-
+		console.log('nuked sandbox with id:', aSbId);
 		
 		Cu.nukeSandbox(SANDBOXES[aSbId].sb);
 		
@@ -162,7 +162,7 @@ function injectContentScript(aSbId, aContentWindow) {
 	};
 	
 	var onBeforeUnload = function() {
-
+		console.log('triggered onBeforeUnload for id:', aSbId);
 		SANDBOXES[aSbId].unloaders.unOnBeforeUnload(); // i dont have to do this, as unSandbox runs all the unloaders, but i just do it for consistency so if i revisit this code in future i dont get confused
 		SANDBOXES[aSbId].unloaders.unSandbox();
 	};
@@ -174,7 +174,7 @@ function injectContentScript(aSbId, aContentWindow) {
 	
 	aContentWindow.addEventListener('beforeunload', onBeforeUnload, false);
 	
-
+	console.log('will now load jquery crap');
 	Services.scriptloader.loadSubScript(core.addon.path.scripts + 'MainContentScript.js?' + core.addon.cache_key, SANDBOXES[aSbId].sb, 'UTF-8');
 }
 // end - addon functionalities
@@ -186,7 +186,7 @@ var bootstrapCallbacks = { // can use whatever, but by default it uses this
 	destroySelf: function() {
 		removeEventListener('unload', fsUnloaded, false);
 		removeEventListener('DOMContentLoaded', onPageReady, false);
-
+		console.log('content.location.hostname:', content.location.hostname);
 		for (var aSbId in SANDBOXES) {
 			if (SANDBOXES[aSbId].unloaders.unSandbox) {
 				SANDBOXES[aSbId].unloaders.unSandbox(); // as this will run all the unloaders
@@ -199,17 +199,17 @@ var bootstrapCallbacks = { // can use whatever, but by default it uses this
 
 		contentMMFromContentWindow_Method2(content).removeMessageListener(core.addon.id, bootstrapMsgListener);
 		
-
+		console.log('content.location.hostname:', content.location.hostname);
 		if (content.location.hostname == TARGET_HOSTNAME) {
-
+			console.log('found matching hostname');
 			var ynews_stuff = content.document.querySelectorAll('.ynews_at_jetpack');
-
+			console.info('ynews_stuff:', ynews_stuff);
 			for (var i=0; i<ynews_stuff.length; i++) {
 				ynews_stuff[i].parentNode.removeChild(ynews_stuff[i]);
-
+				console.log('iter rem:', i);
 			}
 		}
-
+		console.error('okkkkkkkkkkkkkkkkkkkkkkkkkkkkkk iterated removed');
 	}
 };
 const SAM_CB_PREFIX = '_sam_gen_cb_';
@@ -218,7 +218,7 @@ function sendAsyncMessageWithCallback(aMessageManager, aGroupId, aMessageArr, aC
 	sam_last_cb_id++;
 	var thisCallbackId = SAM_CB_PREFIX + sam_last_cb_id;
 	aCallbackScope = aCallbackScope ? aCallbackScope : bootstrap; // :todo: figure out how to get global scope here, as bootstrap is undefined
-
+	console.error('adding to funcScope:', thisCallbackId, content.location.href);
 	aCallbackScope[thisCallbackId] = function(aMessageArr) {
 		delete aCallbackScope[thisCallbackId];
 		aCallback.apply(null, aMessageArr);
@@ -230,7 +230,7 @@ var bootstrapMsgListener = {
 	funcScope: bootstrapCallbacks,
 	receiveMessage: function(aMsgEvent) {
 		var aMsgEventData = aMsgEvent.data;
-
+		console.error('framescript getting aMsgEvent, unevaled:', aMsgEventData);
 		// aMsgEvent.data should be an array, with first item being the unfction name in this.funcScope
 		
 		var callbackPendingId;
@@ -251,12 +251,12 @@ var bootstrapMsgListener = {
 							contentMMFromContentWindow_Method2(content).sendAsyncMessage(core.addon.id, [callbackPendingId, aVal]);
 						},
 						function(aReason) {
-
+							console.error('aReject:', aReason);
 							contentMMFromContentWindow_Method2(content).sendAsyncMessage(core.addon.id, [callbackPendingId, ['promise_rejected', aReason]]);
 						}
 					).catch(
 						function(aCatch) {
-
+							console.error('aCatch:', aCatch);
 							contentMMFromContentWindow_Method2(content).sendAsyncMessage(core.addon.id, [callbackPendingId, ['promise_rejected', aCatch]]);
 						}
 					);
@@ -266,7 +266,7 @@ var bootstrapMsgListener = {
 				}
 			}
 		}
-
+		else { console.warn('funcName', funcName, 'not in scope of this.funcScope', this.funcScope, content.location.href) } // else is intentionally on same line with console. so on finde replace all console. lines on release it will take this out
 		
 	}
 };
@@ -312,7 +312,7 @@ function Deferred() {
 		}.bind(this));
 		Object.freeze(this);
 	} catch (ex) {
-
+		console.log('Promise not available!', ex);
 		throw new Error('Promise not available!');
 	}
 }
@@ -384,25 +384,25 @@ function jsonToDOM(json, doc, nodes) {
 // start - load unload stuff
 function fsUnloaded() {
 	// framescript on unload
-
+	console.log('MainFrameScript.js framworker unloading');
 	bootstrapCallbacks.destroySelf();
 
 }
 function onPageReady(aEvent) {
 	var aContentWindow = aEvent.target.defaultView;
-
+	// console.log('MainFrameScript.js page ready, content.location:', content.location.href, 'aContentWindow.location:', aContentWindow.location.href);
 	doOnReady(aContentWindow);
 }
 
 function init() {
-
+	console.error('in init');
 		contentMMFromContentWindow_Method2(content).addMessageListener(core.addon.id, bootstrapMsgListener);
 		
 		sendAsyncMessageWithCallback(contentMMFromContentWindow_Method2(content), core.addon.id, ['requestInit'], bootstrapMsgListener.funcScope, function(aData) {
 			// core = aData.aCore;
-
+			console.error('back in callback', aData, content.location.href);
 			l10n = aData.aL10n
-
+			console.error('set l10n to:', aData.aL10n, content.location.href)
 			
 			addEventListener('unload', fsUnloaded, false);
 			addEventListener('DOMContentLoaded', onPageReady, false);

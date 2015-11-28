@@ -37,7 +37,7 @@ const JETPACK_DIR_BASENAME = 'jetpack';
 const myServices = {};
 XPCOMUtils.defineLazyGetter(myServices, 'hph', function () { return Cc['@mozilla.org/network/protocol;1?name=http'].getService(Ci.nsIHttpProtocolHandler); });
 XPCOMUtils.defineLazyGetter(myServices, 'sb', function () { return Services.strings.createBundle(core.addon.path.locale + 'bootstrap.properties?' + core.addon.cache_key); /* Randomize URI during development to avoid caching - bug 719376 */ });
-XPCOMUtils.defineLazyGetter(myServices, 'sb_ti', function () { return Services.strings.createBundle(core.addon.path.locale + 'twitter-inlay.properties?' + core.addon.cache_key); /* Randomize URI during development to avoid caching - bug 719376 */ });
+XPCOMUtils.defineLazyGetter(myServices, 'sb_ti', function () { return Services.strings.createBundle(core.addon.path.locale + 'framescript-inlay.properties?' + core.addon.cache_key); /* Randomize URI during development to avoid caching - bug 719376 */ });
 
 // START - Addon Functionalities					
 
@@ -53,7 +53,7 @@ function uninstall(aData, aReason) {
 
 function startup(aData, aReason) {
 	// core.addon.aData = aData;
-	extendCore();
+	// extendCore();
 	
 	var aTimer = Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer);
 	aTimer.initWithCallback({

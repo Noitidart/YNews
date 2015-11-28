@@ -42,7 +42,7 @@ function domInsertOnReady(aContentWindow) {
 	var newJumpTab = jsonToDOM([
 		'li', {class:'priv007 ynews_at_jetpack', role:'tab'},
 			['a', {href:newHref},
-				'News'
+				l10n.news
 			]
 	], aContentDocument, {});
 	
